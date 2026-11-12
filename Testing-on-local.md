@@ -53,7 +53,7 @@ minikube -p gpu-cpu-lab kubectl -- \
   -n tenant-control-plane \
   port-forward svc/rabbitmq 5672:5672
   
-scripts/test.sh
+``` scripts/test.sh
 ?       github.com/dhananjayksharma/tenant-control-plane/cmd/api        [no test files]
 ?       github.com/dhananjayksharma/tenant-control-plane/cmd/worker     [no test files]
 ?       github.com/dhananjayksharma/tenant-control-plane/internal/broker        [no test files]
@@ -73,9 +73,10 @@ ok      github.com/dhananjayksharma/tenant-control-plane/internal/httpapi       
 === RUN   TestDuplicateAndStaleProgress
 --- PASS: TestDuplicateAndStaleProgress (3.90s)
 PASS
-ok      github.com/dhananjayksharma/tenant-control-plane/tests  8.466s
+ok      github.com/dhananjayksharma/tenant-control-plane/tests  8.466s ```
 
-
+```
 curl -sS -X POST http://localhost:8080/v1/tenants \
   -H 'Content-Type: application/json' \
   -d '{"slug":"sbi-test-01","name":"SBI Test Demo"}'
+```
