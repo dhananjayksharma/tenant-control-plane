@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tenants
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d tenants"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports: ["15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  api:
+    build: {context: ., args: {CMD: api}}
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/tenants?sslmode=disable
+      AMQP_URL: amqp://guest:guest@rabbitmq:5672/
+    ports: ["8080:8080"]
+    depends_on:
+      db: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    restart: unless-stopped
+  worker:
+    build: {context: ., args: {CMD: worker}}
+    command: ["--fail-rate=0", "--min-delay-ms=300", "--max-delay-ms=900"]
+    environment:
+      AMQP_URL: amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+    restart: unless-stopped
+  test:
+    image: golang:1.23
+    working_dir: /src
+    volumes: [".:/src"]
+    environment:
+      API_URL: http://api:8080
+      AMQP_URL: amqp://guest:guest@rabbitmq:5672/
+      GOPROXY: https://proxy.golang.org
+    command: ["sh", "scripts/test.sh"]
+    profiles: ["test"]
+    depends_on:
+      api: {condition: service_started}
+      worker: {condition: service_started}
+volumes:
+  postgres_data:
