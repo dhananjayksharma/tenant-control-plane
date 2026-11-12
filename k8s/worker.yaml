@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tenant-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tenant-worker
+  template:
+    metadata:
+      labels:
+        app: tenant-worker
+    spec:
+      containers:
+        - name: worker
+          image: tenant-control-plane-worker:dev
+          imagePullPolicy: Never
+          args: ["--fail-rate=0", "--min-delay-ms=300", "--max-delay-ms=900"]
+          env:
+            - name: AMQP_URL
+              valueFrom:
+                secretKeyRef:
+                  name: control-plane-credentials
+                  key: amqp-url
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {memory: 128Mi}
